@@ -13,21 +13,26 @@ You need Node.js for this project. If you don't have it, download it from [Node.
 1. Clone the project:
 
 ```bash
-git clone https://github.com/beljaha/test-automation.git
+git clone https://github.com/beljaha/test-automation-playwright.git
 ```
 2. Go into the project folder:
 ```bash
-cd test-automation
+cd test-automation-playwright
 ```
 3. Install dependencies:
 ```bash
 npm install
 ```
-4. Initialize TypeScript configuration:
+4. Install TypeScript globally:
 ```bash
-npx tsc --init
+npm install -g typescript
 ```
-5. Run your tests with:
+5. Initialize Playwright:
+```bash
+npx playwright install
+```
+### Running the tests
+Run your tests with:
 ```bash
 npx playwright test
 ```

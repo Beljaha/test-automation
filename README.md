@@ -23,11 +23,16 @@ cd test-automation
 ```bash
 npm install
 ```
-4. Initialize TypeScript configuration:
+4. Install TypeScript globally:
 ```bash
-npx tsc --init
+npm install -g typescript
 ```
-5. Run your tests with:
+5. Initialize Playwright:
+```bash
+npx playwright install
+```
+### Running the tests
+Run your tests with:
 ```bash
 npx playwright test
 ```

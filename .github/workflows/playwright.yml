@@ -2,9 +2,15 @@ name: Playwright Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches: 
+      - main
+      - master
+      - 'feature/**'
   pull_request:
-    branches: [ main, master ]
+    branches: 
+      - main
+      - master
+      - 'feature/**'
 
 jobs:
   test:
@@ -20,8 +26,7 @@ jobs:
         path: ~/.npm
         key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
         restore-keys: |
-          ${{ runner.os }}-node-
-    
+          ${{ runner.os }}-node- 
     
     - uses: actions/setup-node@v4
       with:

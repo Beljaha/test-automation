@@ -39,14 +39,8 @@ jobs:
     - name: Determine changed test directories
       id: find-changed-tests
       run: |
-        echo "Checking for changed files in the 'tests/' directories..."
         FILES_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
         echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
-        echo "Changed test directories: $FILES_CHANGED"
-        echo "Current SHA: ${{ github.sha }}"
-        echo "Previous SHA: ${{ github.event.before }}"
-        git log -1 ${{ github.sha }}
-        git log -1 ${{ github.event.before }}
 
     - name: Install dependencies
       run: npm ci

@@ -18,7 +18,10 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0  # Получить всю историю для всех веток и тэгов
 
     - name: Cache npm dependencies
       uses: actions/cache@v3
@@ -28,9 +31,16 @@ jobs:
         restore-keys: |
           ${{ runner.os }}-node- 
     
-    - uses: actions/setup-node@v4
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
       with:
         node-version: '20'
+
+    - name: Determine changed test directories
+      id: find-changed-tests
+      run: |
+        FILES_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
+        echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
 
     - name: Install dependencies
       run: npm ci
@@ -38,8 +48,22 @@ jobs:
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
 
-    - name: Run Playwright tests and generate reports
-      run: npx playwright test --reporter=dot --reporter=html
+    - name: Run Playwright tests conditionally
+      run: |
+        if [[ "${{ github.event_name }}" == "push" && -n "$FILES_CHANGED" ]]; then
+          for dir in $FILES_CHANGED
+          do
+            if [ -d ${{ github.workspace }}/tests/$dir ]; then
+              echo "Running tests in changed directory: $dir"
+              npx playwright test ${{ github.workspace }}/tests/$dir --reporter=dot --reporter=html
+            else
+              echo "Directory 'tests/$dir' does not exist or has no tests."
+            fi
+          done
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "Running all tests because this is a pull request"
+          npx playwright test ${{ github.workspace }}/tests/ --reporter=dot --reporter=html
+        fi
 
     - name: Upload Playwright reports
       uses: actions/upload-artifact@v4

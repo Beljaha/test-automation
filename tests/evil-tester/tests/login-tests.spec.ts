@@ -11,6 +11,7 @@ test('Unsuccessful login', async ({ page }) => {
     await loginPage.fillUsername(userName);
     await loginPage.fillPassword(wrongPassword);
     await loginPage.clickLogin();
+    await expect(page).toHaveURL(/adminlogin\.html$/);
     await expect(page.locator('h2.loginmessage')).toHaveText('Login Details Incorrect');
 });
 

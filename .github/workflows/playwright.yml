@@ -34,14 +34,18 @@ jobs:
     - name: Determine changed test directories
       id: find-changed-tests
       run: |
-        echo "Listing all changed files:"
-        git diff --name-only ${{ github.event.before }} ${{ github.sha }}
+        git fetch --no-tags --prune --depth=1 origin +refs/heads/*:refs/remotes/origin/*
         
-        FILES_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
+        BASE_BRANCH="${{ github.base_ref }}"
+        git fetch --depth=1 origin $BASE_BRANCH
         
-        echo "Changed test directories: $FILES_CHANGED"
+        FILES_CHANGED=$(git diff --name-only origin/$BASE_BRANCH...${{ github.sha }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
         echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
+        echo "Changed test directories: $FILES_CHANGED"
 
+        if [ -z "$FILES_CHANGED" ]; then
+          echo "No changes in test directories detected."
+        fi
 
     - name: Install dependencies
       run: npm ci

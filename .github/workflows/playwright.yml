@@ -36,6 +36,16 @@ jobs:
       with:
         node-version: '20'
 
+    - name: Determine if the commit is a merge commit
+      id: check_merge
+      run: |
+        if [[ "$(git log -1 --pretty=%B)" =~ Merge\ branch* ]]; then
+          echo "This is a merge commit."
+          echo "IS_MERGE_COMMIT=true" >> $GITHUB_ENV
+        else
+          echo "IS_MERGE_COMMIT=false" >> $GITHUB_ENV
+        fi
+
     - name: Determine changed test directories
       id: find-changed-tests
       run: |
@@ -51,7 +61,7 @@ jobs:
 
     - name: Run Playwright tests conditionally
       run: |
-        if [[ "${{ github.event_name }}" == "push" && -n "$FILES_CHANGED" ]]; then
+        if [[ "${{ github.event_name }}" == "push" && "${{ env.IS_MERGE_COMMIT }}" == "false" && -n "$FILES_CHANGED" ]]; then
           for dir in $FILES_CHANGED
           do
             if [ -d ${{ github.workspace }}/tests/$dir ]; then

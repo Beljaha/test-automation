@@ -32,11 +32,9 @@ jobs:
         node-version: '20'
 
     - name: Determine changed test directories
-      id: find-changed-tests
       run: |
-        CHANGED_TEST_FILES=$(git diff --name-only ${{ github.base_ref }} ${{ github.head_ref }} | grep '^tests/')
-        echo "CHANGED_TEST_FILES=$CHANGED_TEST_FILES" >> $GITHUB_ENV
-        echo "Changed test files: $CHANGED_TEST_FILES"
+        FILES_CHANGED=$(git diff --name-only ${{ github.base_ref }}...${{ github.head_ref }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
+        echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
 
     - name: Install dependencies
       run: npm ci
@@ -46,11 +44,18 @@ jobs:
 
     - name: Run Playwright tests conditionally
       run: |
-        if [ -n "$CHANGED_TEST_FILES" ]; then
-          echo "Running tests for changed test files"
-          npx playwright test --project-path $CHANGED_TEST_FILES
+        if [ -n "$FILES_CHANGED" ]; then
+          echo "Running tests for changed test directories"
+          for dir in $FILES_CHANGED
+          do
+            if [ -d ${{ github.workspace }}/tests/$dir ]]; then
+              npx playwright test ${{ github.workspace }}/tests/$dir --reporter=dot --reporter=html
+            else
+              echo "Directory 'tests/$dir' does not exist or has no tests."
+            fi
+          done
         else
-          echo "No changes in test files"
+          echo "No tests to run since no changes were found in test directories"
         fi
 
     - name: Upload Playwright reports

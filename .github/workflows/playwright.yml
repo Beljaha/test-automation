@@ -1,6 +1,11 @@
 name: Playwright Tests
 
 on:
+  push:
+    branches: 
+      - main
+      - master
+      - 'feature/**'
   pull_request:
     branches: 
       - main
@@ -31,11 +36,12 @@ jobs:
       with:
         node-version: '20'
 
-    - name: Determine changed test directories for pull request
+    - name: Determine changed test directories
+      id: find-changed-tests
       run: |
-        FILES_CHANGED=$(git diff --name-only ${{ github.base_ref }}...${{ github.head_ref }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
+        FILES_CHANGED=$(git diff --name-only ${{ github.event.before }} ${{ github.sha }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
         echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
-        echo "Changed test directories for PR: $FILES_CHANGED"
+        echo "Changed test directories: $FILES_CHANGED"
 
     - name: Install dependencies
       run: npm ci
@@ -45,18 +51,19 @@ jobs:
 
     - name: Run Playwright tests conditionally
       run: |
-        if [ -n "$FILES_CHANGED" ]; then
-          echo "Running tests for changed test directories"
+        if [[ "${{ github.event_name }}" == "push" && -n "$FILES_CHANGED" ]]; then
           for dir in $FILES_CHANGED
           do
-            if [ -d ${{ github.workspace }}/tests/$dir ]]; then
+            if [ -d ${{ github.workspace }}/tests/$dir ]; then
+              echo "Running tests in changed directory: $dir"
               npx playwright test ${{ github.workspace }}/tests/$dir --reporter=dot --reporter=html
             else
               echo "Directory 'tests/$dir' does not exist or has no tests."
             fi
           done
-        else
-          echo "No tests to run since no changes were found in test directories"
+        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          echo "Running all tests because this is a pull request"
+          npx playwright test ${{ github.workspace }}/tests/ --reporter=dot --reporter=html
         fi
 
     - name: Upload Playwright reports

@@ -29,7 +29,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '18'  # Предположительно стабильная версия
+        node-version: '18'
 
     - name: Determine changed test directories
       id: find-changed-tests

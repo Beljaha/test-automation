@@ -24,3 +24,10 @@ test('Add three elements', async ({ page }) => {
     await addRemovePage.addThreeElements();
     await expect(page.locator('button:has-text("Delete")')).toHaveCount(3);
 });
+
+test('Add three elements and delete one', async ({ page }) => {
+    const addRemovePage = new AddRemovePage(page);
+    await addRemovePage.addThreeElements();
+    await addRemovePage.deleteOneElement();
+    await expect(page.locator('button:has-text("Delete")')).toHaveCount(2);
+});

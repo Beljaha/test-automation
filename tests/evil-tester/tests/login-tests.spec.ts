@@ -14,3 +14,5 @@ test('Unsuccessful login', async ({ page }) => {
     await expect(page).toHaveURL(/adminlogin\.html$/);
     await expect(page.locator('h2.loginmessage')).toHaveText('Login Details Incorrect');
 });
+
+

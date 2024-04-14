@@ -39,7 +39,7 @@ jobs:
         BASE_BRANCH="${{ github.base_ref }}"
         git fetch --depth=1 origin $BASE_BRANCH
         
-        FILES_CHANGED=$(git diff --name-only origin/$BASE_BRANCH...${{ github.sha }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq)
+        FILES_CHANGED=$(git diff --name-only origin/$BASE_BRANCH...${{ github.sha }} | grep '^tests/' | awk -F '/' '{print $2}' | uniq | tr '\n' ',' | sed 's/,$//')
         echo "FILES_CHANGED=$FILES_CHANGED" >> $GITHUB_ENV
         echo "Changed test directories: $FILES_CHANGED"
 
@@ -56,14 +56,18 @@ jobs:
     - name: Run Playwright tests conditionally
       run: |
         if [[ "${{ github.event_name }}" == "pull_request" && -n "$FILES_CHANGED" ]]; then
-          for dir in $FILES_CHANGED
+          IFS=',' read -r -a dirs <<< "$FILES_CHANGED"
+          for dir in "${dirs[@]}"
           do
             if [ -d ${{ github.workspace }}/tests/$dir ]; then
               echo "Running tests in changed directory: $dir"
               npx playwright test ${{ github.workspace }}/tests/$dir --reporter=dot --reporter=html
+            else
+              echo "Directory $dir does not exist or has no tests"
             fi
           done
         fi
+
 
     - name: Upload Playwright reports
       uses: actions/upload-artifact@v4

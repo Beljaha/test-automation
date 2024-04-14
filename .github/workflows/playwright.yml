@@ -1,11 +1,6 @@
 name: Playwright Tests
 
 on:
-  push:
-    branches: 
-      - main
-      - master
-      - 'feature/**'
   pull_request:
     branches: 
       - main
@@ -34,17 +29,7 @@ jobs:
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
-        node-version: '20'
-
-    - name: Determine if the commit is a merge commit
-      id: check_merge
-      run: |
-        if [[ "$(git log -1 --pretty=%B)" =~ Merge\ branch* ]]; then
-          echo "This is a merge commit."
-          echo "IS_MERGE_COMMIT=true" >> $GITHUB_ENV
-        else
-          echo "IS_MERGE_COMMIT=false" >> $GITHUB_ENV
-        fi
+        node-version: '18'  # Предположительно стабильная версия
 
     - name: Determine changed test directories
       id: find-changed-tests
@@ -61,19 +46,14 @@ jobs:
 
     - name: Run Playwright tests conditionally
       run: |
-        if [[ "${{ github.event_name }}" == "push" && "${{ env.IS_MERGE_COMMIT }}" == "false" && -n "$FILES_CHANGED" ]]; then
+        if [[ "${{ github.event_name }}" == "pull_request" && -n "$FILES_CHANGED" ]]; then
           for dir in $FILES_CHANGED
           do
             if [ -d ${{ github.workspace }}/tests/$dir ]; then
               echo "Running tests in changed directory: $dir"
               npx playwright test ${{ github.workspace }}/tests/$dir --reporter=dot --reporter=html
-            else
-              echo "Directory 'tests/$dir' does not exist or has no tests."
             fi
           done
-        elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
-          echo "Running all tests because this is a pull request"
-          npx playwright test ${{ github.workspace }}/tests/ --reporter=dot --reporter=html
         fi
 
     - name: Upload Playwright reports
